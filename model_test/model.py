@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from datasets import load_dataset
+from pathlib import Path
 
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -24,8 +25,21 @@ pipe = pipeline(
     device=device,
 )
 
-dataset = load_dataset("distil-whisper/librispeech_long", "clean", split="validation")
-sample = dataset[0]["audio"]
 
-result = pipe(sample, return_timestamps=True)
-print(result["text"])
+test_audio_dir = Path("./test_audios")
+
+test_audio_file = test_audio_dir / "Keyness.wav"
+
+result = pipe(
+    str(test_audio_file),
+    chunk_length_s=30,
+    stride_length_s=5,
+    batch_size=4,
+    return_timestamps=True,
+)
+
+
+output_file = Path("./txt_results") / "keyness.txt"
+
+with open(output_file, "w", encoding="utf-8") as file:
+    file.write(result["text"])
